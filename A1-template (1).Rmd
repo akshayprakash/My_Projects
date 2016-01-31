@@ -1,6 +1,6 @@
 ---
-title: 'MA799 Assignment 1: The Flights Dataset'
-author: "Akshay, Xiangxi, Ganesh"
+title: 'The NYC Flights Dataset'
+author: "Akshay Prakash"
 date: "13 February 2015"
 output:
   pdf_document:
