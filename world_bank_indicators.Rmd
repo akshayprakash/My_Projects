@@ -1,0 +1,436 @@
+---
+output: html_document
+---
+---
+title: 'World Bank Indicators'
+author: "Akshay Prakash"
+date: "15 Feb 2016"
+output:
+  pdf_document: null
+  word_document: default
+---
+
+# Objective
+This report looks at 9 different indicators for 9 countries. These indicators are crucial for growth and development of the country.   
+
+In this report, we categorized the countries into developed, developing and poor countries. Our goal is to explore the different patterns of the overall national economy in terms of these categories, and see how these contributing factors differ. We also examined correlation among indicators such as: the employment rate, GDP, Foreign Direct Investment (FDI) and Labor Force and this yielded several linear graphs of the certain variables on a yearly basis. We conducted an association rule analysis and a cluster analysis; the association rule analysis enables us see the correlation between certain combination of variables; the cluster analysis gives us the certain variable buckets based on all the indicators we examined.   
+
+# Data Description  
+WDI Data is examined in our report. The data is the World Bank’s primary collection of development indicators, compiled from officially-recognized international sources. It presents the most current and accurate global development data available, and includes national, regional and global estimates. 
+Variables description  
+
+
+
+
+
+\newpage  
+
+###GDP of developed, developing and poor countries
+
+```{r,warning=FALSE,message=FALSE}
+library(ggplot2)
+library(WDI)
+library(countrycode)
+library(choroplethr)
+library(choroplethrMaps)
+library(GGally)
+
+indicatorMetaData <- WDIsearch("GDP", field="name", short=FALSE)
+countries <- c("United States", "India", "China", "Sweden",
+               "Brazil","Russia","Sierra Leone","Switzerland","Canada")
+iso2cNames <- countrycode(countries, "country.name", "iso2c")
+
+wdiData <- WDI(iso2cNames, indicatorMetaData[89,1], start=2004, end=2014)
+indicatorName<-indicatorMetaData[89,2]
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]/10^12), 
+                    group=country, color=country))+ geom_line(size=1)+
+  scale_x_continuous(name="Year",breaks=c(unique(wdiData[,"year"])))+
+  scale_y_continuous(name=paste(indicatorName,"Trillion Dollars"))+
+  scale_linetype_discrete(name="Country") + 
+  theme(legend.title=element_blank())
+```
+  
+This above graph gives us the GDP of 8 countries during the 10 years from 2004 to 2014. From the demonstration we can see that China has a continuously and steadily growing GDP throughout this period, and during the last 2 years exceeded the US becoming the first among the 8 countries. India also underwent seemingly steady and obvious growth. The US has been occupying the first place for around 8 years and also improved constantly except for the year of 2009. The Russian Federation and Brazil also had steady but marginal growth. Switzerland, Canada and Sierra Leone had negligible growth during the period.   
+
+\newpage
+
+###GDP annual growth of developed, developing and poor countries
+```{r,message=FALSE,warning=FALSE}
+wdiData <- WDI(iso2cNames, indicatorMetaData[87,1], start=2004, end=2014)
+indicatorName<-indicatorMetaData[87,2]
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]), 
+                    group=country, color=country))+
+  geom_line(size=1)+scale_x_continuous(name="Year",
+                                       breaks=c(unique(wdiData[,"year"])))+
+  scale_y_continuous(name=indicatorName)+ 
+  scale_linetype_discrete(name="Country")+ 
+  theme(legend.title=element_blank())
+```  
+  
+From the graph, we can tell the annual growth of GDP is getting slightly slow in the long-term trend. Also, there is a major break-down in 2008 and 2009. Our guess is that crash is due to the financial crisis started in 2008. The trend between different countries are pretty similar to each other.
+
+\newpage
+
+###Foriegn Direct Investment (Inflows) of developed, developing and poor countries
+```{r,messagr=FALSE,warning=FALSE}
+wdiData <- WDI(iso2cNames, indicatorMetaData[10,1], start=2004, end=2014)
+indicatorName<-indicatorMetaData[10,2]
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]), 
+                    group=country, color=country))+
+  geom_line(size=1)+scale_x_continuous(name="Year",
+                                       breaks=c(unique(wdiData[,"year"])))+
+  scale_y_continuous(name=indicatorName)+ 
+  scale_linetype_discrete(name="Country")+ 
+  theme(legend.title=element_blank())
+```  
+  
+This figure give us the trend of the foreign investment inflow over the period of 2004 and 2014.  We can see that the mainstream of this figure (range between 0 to 5) contains the United States, China, Canada, India, the Russian Federation. The five countries in this stream had constant but not dramatic ups and downs during the 10 years. Sweden and Switzerland went through somewhat more obvious fluctuations (Switzerland for example, went through from 1% to 13% from 2005 to 2006) than the main stream. Sierra Leone during this period had plummeting and rocket-climbing changes between 2010 and 2014. The peak is very obvious from the majority countries. 
+  
+\newpage
+
+###Comparison of above metrics of developed, developing and poor countries
+```{r,message=FALSE,warning=FALSE}
+wdiData <- WDI(iso2cNames, indicatorMetaData[c(89,87,10),1], start=2004, end=2014)
+names(wdiData)<-c("iso2c","country","year","GDP.PPP","GDP.growth.annual.percent","Foreign.direct.investment")
+ggpairs(wdiData,4:6)+ theme(axis.text=element_text(size=6),
+        axis.title=element_text(size=6,face="bold"))
+```
+  
+This graph looks at the distribution of the frequencies among the countries and the correlations of the variables - GDP (PPP), Foreign Direct Investments, GDP Annual growth. As the correlation values are low they are a good fit for regression in the next step.
+
+\newpage
+
+###Unemployment rate of developed, developing and poor countries
+```{r,message=FALSE,warning=FALSE}
+indicatorMetaData <- WDIsearch("Unemployment", field="name", short=FALSE)
+wdiData <- WDI(iso2cNames, indicatorMetaData[18,1], start=2004, end=2014)
+indicatorName<-indicatorMetaData[18,2]
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]), 
+                     group=country, color=country))+
+      geom_line(size=1)+scale_x_continuous(name="Year",
+                                          breaks=c(unique(wdiData[,"year"])))+
+      scale_y_continuous(name=paste(indicatorName,"Millions"))+ 
+      scale_linetype_discrete(name="Country")+ 
+      theme(legend.title=element_blank())
+
+```
+  
+The fluctuation of unemployment rate is acute during the last several years.  Affected by the financial crisis in 2008, there is a huge increase in unemployment rate in that year. The United States is one of the worst victims, As we can see in the graph, the unemployment rate of the United States increased the most among all the countries examined. 
+\newpage
+
+###Total Population of developed, developing and poor countries
+```{r,message=FALSE,warning=FALSE}
+wdiData <- WDI(iso2cNames, indicator="SP.POP.TOTL", start=2004, end=2014)
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]/10^9), 
+                    group=country, color=country))+
+     geom_line(size=1)+scale_x_continuous(name="Year",
+                                         breaks=c(unique(wdiData[,"year"])))+
+     scale_y_continuous(name="Total Population in Billions")+ 
+     scale_linetype_discrete(name="Country")+ 
+     theme(legend.title=element_blank())
+```
+  
+This graph gives us an impression of population changes of 8 countries in 10 years from 2004 to 2014. We can see that China and India held a fairly high population amount, more than 1 billion in total and has been increasing over the past 10 years. The other 6 countries barely had any seemingly apparent growth and is not populated.
+
+
+\newpage
+
+###Labor Force of developed, developing and poor countries
+```{r,message=FALSE,warning=FALSE}
+indicatorMetaData <- WDIsearch("Labor", field="name", short=FALSE)
+wdiData <- WDI(iso2cNames, indicatorMetaData[53,1], start=2004, end=2014)
+indicatorName<-indicatorMetaData[53,2]
+ggplot(wdiData, aes(x=year, y=(wdiData[,3]/10^6), 
+                     group=country, color=country))+
+      geom_line(size=2)+scale_x_continuous(name="Year",
+                                          breaks=c(unique(wdiData[,"year"])))+
+      scale_y_continuous(name=paste(indicatorName,"Millions"))+ 
+      scale_linetype_discrete(name="Country")+ 
+      theme(legend.title=element_blank())
+```
+    
+This graph looks at the labor strength of the various countries by the millions. China and India have the highest Labor force, followed by the United States. This variable has to be correlated with the population. We will test this out further in the next step.  
+
+\newpage
+
+###Heat Maps to schowcase different metrics for the entire world
+```{r,message=FALSE,warning=FALSE}
+choroplethr_wdi(code="SP.POP.TOTL", year=2014, title="2014 Population", num_colors=1)
+```
+  
+The allocation of world population is very uneven. Some parts of the world are covered with very light blue, such as Canada and Australia, which means these parts have very a small population. Some countries, such as China and India, are covered with dark blue, which means these two countries have very large population.    
+
+```{r,message=FALSE,warning=FALSE}
+choroplethr_wdi(code="NY.GDP.PCAP.CD", year=2014, title="2014 Per Capita Income") + scale_fill_brewer(palette = "YlOrBr")
+```  
+
+The highest intensity of Per Capita Income is primarily located in the North America and Western Europe. The less dense is primarily in Asia, Eastern Europe and Latin America. Africa and India has the least Per Capita Income.     
+
+```{r,message=FALSE,warning=FALSE}
+choroplethr_wdi(code="SP.DYN.LE00.IN", year=2013, title="2013 Life Expectancy") + scale_fill_brewer(palette="YlOrRd")
+```
+  
+The life expectancy is also pretty uneven. The developed countries tend to be covered in darker color, which means these countries have higher life expectancy. The countries in Africa are covered in lighter colors, which means these countries have lower life expectancy.
+  
+# Association Rules
+
+We choose 9 countries and related data from 2004 to 2014 to examine if there is any association rules between foreign investment, GDP, and GDP growth rate. In order to do that, we firstly convert numeric variables, foreign investment, GDP, and GDP growth rate, to categorical variables using the discretize function. Then the apriori function to develop a set of association rules. In the end, we choose one rule that is very Here is the code for the association rules
+
+```{r,message=FALSE,warning=FALSE}
+library(arules)
+indicatorMetaData <- WDIsearch("GDP", field="name", short=FALSE)
+countries <- c("United States", "India", "China", "Sweden", "Brazil",
+               "Russia","Sierra Leone","Switzerland","Canada")
+iso2cNames <- countrycode(countries, "country.name", "iso2c")
+wdiData <- WDI(iso2cNames, indicatorMetaData[93,1], start=2004, end=2014)
+data2<-wdiData[c(2,3,4)]
+wdiData <- WDI(iso2cNames, indicator="SP.DYN.LE00.IN", start=2004, end=2014)
+data2<-cbind(data2,wdiData[3])
+names(data2)<-c("country","income.per.capita","year","life.expectancy")
+data2$income.per.capita<-discretize(data2$income.per.capita,categories = 5,labels = c("<$17k","$17k-35k","$35k-52k","$52k-70k","$70k+"))
+data2$life.expectancy<-discretize(data2$life.expectancy,categories = 5,labels = c("42-50 Years","50-60 Years","60-65 Years","65-75 Years","75+ Years"))
+data2$country<-sapply(data2$country,as.factor)
+data2$year<-sapply(data2$year,as.factor)
+rules2 = apriori(data2)
+inspect(rules2[16])
+```
+
+## Interpretation 
+
+1. 11% of the countries with life expectancy longer than 75 years have an average income per capita between $52k to $70k. 85% of the countries having a average income per capita between $52k to $70k have a life expectancy longer than 75 years.  
+
+2. The number of countries with an average income per capita between $52k to $70k and life expectancy longer than 75 years would be 86% higher than we would expect if the country has an average income per capita between $52k to $70k and life expectancy longer than 75 years were independent.  
+
+
+Next, we choose 9 countries and related data from 2004 to 2014 to examine if there is any association rules between labor force and total population. In order to do that, we firstly convert numeric variables, labor force and total population, to categorical variables using the cut function. Then the apriori function to develop a set of association rules. Here is the code for it: 
+
+```{r,message=FALSE,warning=FALSE}
+wdiData <- WDI(iso2cNames, indicator = c("SL.TLF.TOTL.IN",
+                                         "SP.POP.TOTL"), 
+               start = 2004, end = 2014)
+names(wdiData) <- c("Country Code", "Country", "Year",
+                    "Labor Force", "Total Population")
+wdiData$`Labor Force` <- wdiData$`Labor Force`/10^6
+wdiData$`Total Population` <- wdiData$`Total Population`/10^6
+wdiData$`Labor Force` <- cut(wdiData$`Labor Force`, 
+                             breaks = c(0,200,400,600,900), labels = c("<200Mil","200Mil to 400Mil","400Mil to 600Mil",
+                                                                                              "600Mil to 900Mil"))
+wdiData$`Total Population` <- cut(wdiData$`Total Population`, breaks = c(0,200,400,600,800,1400), labels = c("<200Mil","200Mil to 400Mil",
+                                                                                                             "400Mil to 600Mil", "600Mil to 800Mil", 
+                                                                                                             "800Mil to 1400Mil"))
+labor_and_population <- data.frame(wdiData$`Labor Force`,
+                                   wdiData$`Total Population`)
+rules <- apriori(labor_and_population)
+```
+ lhs                                              rhs                                              support confidence     lift
+1 {wdiData..Labor.Force.=600Mil to 900Mil}      => {wdiData..Total.Population.=800Mil to 1400Mil} 0.1111111  1.0000000 4.500000
+2 {wdiData..Labor.Force.=400Mil to 600Mil}      => {wdiData..Total.Population.=800Mil to 1400Mil} 0.1111111  1.0000000 4.500000
+3 {wdiData..Total.Population.=200Mil to 400Mil} => {wdiData..Labor.Force.=<200Mil}                0.1515152  1.0000000 1.285714
+4 {wdiData..Total.Population.=<200Mil}          => {wdiData..Labor.Force.=<200Mil}                0.6262626  1.0000000 1.285714
+5 {wdiData..Labor.Force.=<200Mil}               => {wdiData..Total.Population.=<200Mil}           0.6262626  0.8051948 1.285714
+
+
+
+
+## Interpretation (Part 2)  
+
+1. 15% of the countries with labor force less than 200 million have a total population between 200 million to 400 million. 100% of the countries having a population between 200 million to 400 million have a labor force less than 200 million. The number of countries with a labor force between 200 to 400 million and a total population less than 200 million would be 29% higher than we would expect if the country population range between 200 to 400 million and labor force range less than 200 million were independent. 
+ 
+2. 62% of the countries with a labor force less than 200 million have a total population less than 200 million. 100% of the countries having a population less than 200 million have a labor force less than 200 million. The number of countries with a labor force less than 200 million and a total population less than 200 million would be 28% higher than we would expect if the country population range less than 200 million and labor force range less than 200 million were independent.  
+
+```{r,message=FALSE,warning=FALSE}
+indicatorMetaData <- WDIsearch("GDP", field="name", short=FALSE)
+countries <- c("United States", "India", "China", 
+               "Sweden", "Brazil","Russia","Sierra Leone",
+               "Switzerland","Canada")
+iso2cNames <- countrycode(countries, "country.name", "iso2c")
+wdiData <- WDI(iso2cNames, indicatorMetaData[c(89,87,10),1], 
+               start=2004, end=2014)
+#Now it should work
+data<-wdiData[c(2:6)]
+names(data)<-c("country","year","GDP.PPP","GDP.Growth.Rate","FDI.Inflows")
+data$GDP.PPP = discretize(data$GDP.PPP,categories = 3,labels = c("Poor","Developing","Developed"))
+data$GDP.Growth.Rate= discretize(data$GDP.Growth.Rate,categories = 3,labels = c("Low","Medium","High"))
+data$FDI.Inflows = discretize(data$FDI.Inflows,categories = 3,labels = c("Low","Medium","High"))
+#data<-cbind(wdiData[c(2,3)],data)
+data$country <- sapply(data$country,as.factor)
+data$year <- sapply(data$year,as.factor)
+apriori(data = data)
+rules <- apriori(data = data)
+inspect(rules[21])
+```
+
+## Interpretation (Part 3)
+1. 60% of the countries are poor countries
+2. 80% of the countries have a medium GDP growth rate
+3. The number of poor countries and a medium growth rate would be 1% higher than we would expect if the poor countries and GDP growth rate were independent.
+```{r,message=FALSE,warning=FALSE}
+inspect(rules[22])
+```
+## Interpretation (Part 4)
+1. 67% of the countries are poor countries
+2. 89% of the countries have a low FDI inflows
+3. The number of poor countries and a low fdi would be 3% lower than we would expect if the poor countries and lgdp growth rate were independent.
+
+```{r,message=FALSE,warning=FALSE}
+inspect(rules[23])
+```
+## Interpretation (Part 5)
+1. 72% of the have medium growth rate
+2. 92% of the countries have a low FDI inflows
+3. The number of poor countries and a low fdi would be the same if the poor countries and lgdp growth rate were independent.
+
+# Cluster Analysis  
+
+## Data Preparation  
+In the beginning, we had a data set for 9 countries, and we tried to run the analysis on all of them. However, the clustering results are clearer if we only examine 6 countries. We decided to omit some of them to make the results more relevant. In the end, we used China, India, Sierra Leone, United States, Sweden, and Switzerland. Those countries represent various development levels ranging from poor to developed countries and also differ geographically.  
+
+## Algorithm Comparison
+For better results, we ran the analysis using two different algorithms:   
+
+### Centroid-based clustering
+In centroid-based clustering, clusters are represented by a central vector, which may not necessarily be a member of the data set. When the number of clusters is fixed to k, k-means clustering gives a formal definition as an optimization problem: find the k cluster centers and assign the objects to the nearest cluster center, such that the squared distances from the cluster are minimized.
+K-means clustering aims to partition n observations into k clusters in which each observation belongs to the cluster with the nearest mean, serving as a prototype of the cluster.  
+
+### Hierarchical clustering
+In data mining and statistics, hierarchical clustering (also called hierarchical cluster analysis or HCA) is a method of cluster analysis which seeks to build a hierarchy of clusters.  
+
+## Find the Right Number of Clusters
+
+```{r,message=FALSE,warning=FALSE, echo=FALSE}
+library(fpc)
+indicatorMetaData <- WDIsearch("GDP", field="name", short=FALSE)
+countries <- c("United States", "India", "China", "Sweden",
+"Sierra Leone","Switzerland")
+iso2cNames <- countrycode(countries, "country.name", "iso2c")
+#get the 5 variables out
+wdiData1 <- WDI(iso2cNames, indicatorMetaData[c(89,87,10,93),1], start=2004, end=2014)
+wdiData1 <- wdiData1[order(wdiData1$country),]
+#get the total population
+wdiData2 <- WDI(iso2cNames, indicator = "SP.POP.TOTL", start=2004, end=2014)
+wdiData2 <- wdiData2[order(wdiData2$country),]
+# combine population data with rest of the indicators
+wdiData1 <- cbind(wdiData1,wdiData2[3])
+# get life exp
+wdiData3 <- WDI(iso2cNames, indicator = "SP.DYN.LE00.IN", start=2004, end=2014)
+wdiData3 <- wdiData3[order(wdiData3$country),]
+wdiData1 <- cbind(wdiData1,wdiData3[3])
+# get labor force
+wdiData4 <- WDI(iso2cNames, indicator = "SL.TLF.TOTL.IN", start=2004, end=2014)
+wdiData4 <- wdiData4[order(wdiData4$country),]
+wdiData1 <- cbind(wdiData1,wdiData4[3])
+# get EMPLOYMWNT RATE (OLDER THAN 15)
+wdiData5 <- WDI(iso2cNames, indicator = "SL.EMP.TOTL.SP.ZS", start=2004, end=2014)
+wdiData5 <- wdiData5[order(wdiData5$country),]
+wdiData1 <- cbind(wdiData1,wdiData5[3])
+View(wdiData1)
+data1<-wdiData1[c(2:11)]
+names(data1)<-c("country","year","GDP.PPP","GDP.Growth.Rate","FDI.Inflows","Income.PerCapita","Total.Population", "Life.Expectancy","Labor.Force","Employment.Rate")
+library(ape)
+data_numeric<-data1[c(3:10)]
+rownames(data_numeric)<-do.call(paste, c(data1[c(1,2)], sep = " "))
+library(clValid)
+data.results<-clValid(na.omit(data_numeric), nClust = 3:5, clMethods = c("kmeans","hierarchical","agnes"),validation = "internal")
+summary(data.results)
+
+```
+  
+# Heat Map for Clusters  
+
+The heatmap clusters by both rows and columns. It then reorders the resulting dendrograms according to mean.  We used the heatmap to determine the relative values for all the variables and the country/year.
+```{r,message=FALSE,warning=FALSE}
+scal.data1<-as.matrix(scale(data_numeric))
+heatmap(scal.data1)
+```
+
+# Heat Map Results  
+
+We have the heat map shown above. 
+The darker the color, the lower the value of the variable. The lighter the color, the higher the value of the variable. For e.g: Per.Capita Income is a lighter shade of yellow for countries like Sweden, Switzerland and United States, indicating a higher per capita income. As against Sierra Leone, India and China which have a lower per capita income reflected by the darker shade of red.    
+
+# Hierarchical cluster analysis  
+
+We used all of the data to perform the clustering and see if we got distinct clusters. The hclust function in R used the complete linkage method for hierarchical clustering by default. This particular clustering method defined the cluster distance between two clusters to be the maximum distance between their individual components. At every stage of the clustering process, the two nearest clusters are merged into a new cluster. The process is repeated until the whole data set is agglomerated into one single cluster.    
+
+Hierarchical Clustering gives us 5 clusters of countries based on all data. We use 5 clusters as a cut off point for the dendrogram as per the clValid algorithm.  
+```{r,message=FALSE,warning=FALSE}
+hc<-hclust(dist(data_numeric))
+plot(hc)
+rect.hclust(hc, k = 5, border = "red")
+```
+  
+# K-MEANS  
+
+We conducted the k-mean algorithm in 2 clusters, 3 clusters and 4 clusters. This gave us the category of 2, 3 and 4 clusters analysis. 
+
+
+```{r, message=FALSE, warning=FALSE}
+# First, we ruled out the rows with null values. 
+data2 <- na.omit(data1)
+data1 <- na.omit(data1)
+
+#Then we categorize the GDP into 3 categories in order to obtain and observe the confusion tables. Here, we took the GDP and Employment rate we were interested in. 
+data2$GDP.PPP = discretize(data2$GDP.PPP,categories = 3,labels = c("Poor","Developing","Developed"))
+data2$Employment.Rate = discretize(data2$Employment.Rate,categories = 3,labels = c("Low","Medium","High"))
+```
+
+## 2 Clusters  
+```{r,message=FALSE,warning=FALSE}
+#K-means procedure
+kmeans.result2 = kmeans(x=data1[, c('GDP.PPP','GDP.Growth.Rate','FDI.Inflows','Income.PerCapita',
+                                    'Total.Population', 'Life.Expectancy','Labor.Force','Employment.Rate')], 
+                        centers = 2)
+data2$kmeans.cluster2 = factor(kmeans.result2$cluster)
+
+#Confusion Table
+table(cluster = data2$kmeans.cluster2, actual = data2$GDP.PPP)
+
+```      
+
+## Results:  
+
+Let’s look at within the clusters.
+Cluster 1: China, United States
+Cluster 2: (China), India, Sierra Leone, Sweden, Switzerland
+Cluster 1 has the countries with relatively high GDP, like China and United States, whereas Cluster 2 has relatively low GDP.  
+
+## 3 Clusters  
+```{r,message=FALSE,warning=FALSE}
+#K-means procedure
+kmeans.result3 = kmeans(x=data1[, c('GDP.PPP','GDP.Growth.Rate','FDI.Inflows','Income.PerCapita',
+                                    'Total.Population', 'Life.Expectancy','Labor.Force','Employment.Rate')],
+                        centers = 3)
+data2$kmeans.cluster3 = factor(kmeans.result3$cluster)
+
+#Confusion Table
+table(cluster = data2$kmeans.cluster3, actual = data2$GDP.PPP)
+```
+
+## Results:  
+
+Below is the cluster pattern: 
+Cluster 1: China, United States
+Cluster 2: (China), India
+Cluster 3: Sierra Leone, Sweden, Switzerland
+Cluster 1 to Cluster 3 gives us a descending order of the GDP of countries. China and United States still take cluster with the highest GDP, India and China during some certain years are in Cluster 2. Sierra Leone, Sweden and Switzerland have the lowest.
+
+## 4 Clusters
+```{r,message=FALSE,warning=FALSE}
+#K-means procedure
+kmeans.result4 = kmeans(x=data1[, c('GDP.PPP','GDP.Growth.Rate','FDI.Inflows',
+                                    'Income.PerCapita','Total.Population', 'Life.Expectancy','Labor.Force','Employment.Rate')],
+                        centers = 4)
+data2$kmeans.cluster4 = factor(kmeans.result4$cluster)
+
+#Confusion table
+table(cluster = data2$kmeans.cluster4, actual = data2$GDP.PPP)
+```
+
+## Results:  
+
+First we look at what we have within the 4 clusters.
+Cluster 1: (China), India
+Cluster 2: Sierra Leone 
+Cluster 3: United States, China
+Cluster 4: (India), Sweden, Switzerland
+In this 4 cluster category, we have GDP from high to low in the order of Cluster 3, Cluster 1, Cluster 4 to Cluster 2. We can see from this cluster of 4 that, Sierra Leone has lower GDP than Sweden and Switzerland even if it was in the same categorize as theses two countries when we conducted 2 clusters and 3 clusters analysis previously. This differentiates the 3 countries and makes better sense. 
